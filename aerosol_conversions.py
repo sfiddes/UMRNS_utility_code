@@ -148,6 +148,7 @@ def lognormal_cumulative_to_r(N,radius,rbar,sigma):
     return total_to_r
 
 def cutoff_calcs(aernumb,aerdiam,size_radius,CCN):
+    print('calculating ',size_radius)
     nsteps = len(aernumb.time)
     nmodes = 7
     nlevels=len(aernumb['level_height'])
@@ -217,7 +218,8 @@ def lognormal_dndlogd(n,d,dbar,sigma_g):
 
 def generate_size_dists(aernumb,aerdiam):
     # Note - will only calc size dist at surface. 
-    
+
+    print('calculating size distributions')
     nsteps = len(aernumb.time)
     nlat = len(aernumb['grid_latitude'])
     nlon = len(aernumb['grid_longitude'])
@@ -344,20 +346,31 @@ def main():
     if os.path.exists(fdir+aerdiamfname):
         # Aerosol dry diameters 
         aerdiam = xr.open_dataset(fdir+aerdiamfname)
+
+    # Run a check that the numb and diameter files have the same nuber of time dims, annoyingly they can be different
+    # if they are not the same, then figure out what needs to be dropped. 
+    tnumb = len(aernumb.time)
+    tdiam = len(aerdiam.time)
+    if tnumb != tdiam: 
+        if aernumb.time[0] > aerdiam.time[0]: 
+            # aerdiam is on a slightly different time dimension, and if they are the same length, should be 
+            # 1min 15 sec after aernumb. So if the first aerdiam time is less than the aernumb time, 
+            # we can drop that first step.
+            aerdiam = aerdiam.isel(time=np.arange(1,len(aerdiam.time)))
     
     if os.path.exists(fdir+aerdiamfname) and os.path.exists(fdir+aernumbfname):
         # Calculate total number conc. at certain cut-offs
         N3 = cutoff_calcs(aernumb,aerdiam,1.5e-9,CCN=False)
         N10 = cutoff_calcs(aernumb,aerdiam,5e-9,CCN=False)
-        CCN40 = cutoff_calcs(aernumb,aerdiam,20e-9,CCN=False)
-        CCN50 = cutoff_calcs(aernumb,aerdiam,25e-9,CCN=False)
+        CCN40 = cutoff_calcs(aernumb,aerdiam,20e-9,CCN=True)
+        CCN50 = cutoff_calcs(aernumb,aerdiam,25e-9,CCN=True)
         aernumb_total_concentrations = xr.merge([N3,N10,CCN40,CCN50])
-        aernumb_total_concentrations.to_netcdf(fdir+'umnsaa_paernumbtotals{}{}.nc'.format(hour))
+        aernumb_total_concentrations.to_netcdf(fdir+'umnsaa_paernumbtotals{}{}.nc'.format(hour,location))
         del(N3,N10,CCN40,CCN50,aernumb_total_concentrations)
         
         # Caluclate size distributions
         sizedist = generate_size_dists(aernumb,aerdiam)
-        sizedist.to_netcdf(fdir+'umnsaa_psizedistributionssurf{}{}.nc'.format(hour))
+        sizedist.to_netcdf(fdir+'umnsaa_psizedistributionssurf{}{}.nc'.format(hour,location))
     
         del(aerdiam,aernumb)
 
