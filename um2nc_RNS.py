@@ -217,13 +217,20 @@ def main():
                     
                 point = reformatted_point
         
-                # Drop the current grid lat/lons because they are a bit useless and convlute things
+                # Drop the current grid lat/lons because they are a bit useless and convlute things, 
+                # and tell the actual grid lat lons to have a time dimension. 
                 if 'grid_latitude' in list(point.coords):
                     point = point.drop_vars(['grid_latitude','grid_longitude'])
+                    point['latitude'] = point.latitude.expand_dims('time')
+                    point['longitude'] = point.longitude.expand_dims('time')
                 if 'grid_latitude1' in list(point.coords):
                     point = point.drop_vars(['grid_latitude1','grid_longitude1'])
+                    point['latitude1'] = point.latitude1.expand_dims('time')
+                    point['longitude1'] = point.longitude1.expand_dims('time')
                 if 'grid_latitude2' in list(point.coords):
                     point = point.drop_vars(['grid_latitude2','grid_longitude2'])
+                    point['latitude2'] = point.latitude2.expand_dims('time')
+                    point['longitude2'] = point.longitude2.expand_dims('time')
         
                 # but then we need to include the grid lat/lon as a dimension for the aerosol conversions to work, so 
                 # add in as a dummy dim, with only 1 point which equals 0 for all.. 
