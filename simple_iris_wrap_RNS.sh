@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -P jk72
-#PBS -l walltime=10:00:00,ncpus=8,mem=100Gb,wd
+#PBS -l walltime=10:00:00,ncpus=16,mem=192Gb,wd
 #PBS -q normal
 #PBS -l storage=scratch/access+scratch/jk72+gdata/jk72+gdata/access+gdata/hh5+gdata/hr22
 #PBS -j oe
